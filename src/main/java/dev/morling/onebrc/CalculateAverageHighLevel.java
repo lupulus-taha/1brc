@@ -37,7 +37,7 @@ public class CalculateAverageHighLevel {
             while((line = br.readLine()) != null) {
                 String[] parts = line.split(DELIMITER, 2);
                 double value = Double.parseDouble(parts[1].trim());
-                measurements.computeIfAbsent(parts[0].trim(), _ -> new MeasurementStats()).add(value);
+                measurements.computeIfAbsent(parts[0].trim(), k -> new MeasurementStats()).add(value);
             }
         }
         catch(Exception e) {

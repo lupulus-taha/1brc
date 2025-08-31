@@ -26,7 +26,7 @@ import static java.util.stream.Collectors.groupingBy;
 
 public class CalculateAverage_lupulus_taha {
 
-//    private static final String FILE = "./measurements.txt";
+    // private static final String FILE = "./measurements.txt";
     private static final String FILE = "./measurements_trimmed.txt";
 
     private record Measurement(String station, double value) {
@@ -53,7 +53,7 @@ public class CalculateAverage_lupulus_taha {
         private long count;
     }
 
-    static void main(String[] args) throws IOException {
+    public static void main(String[] args) throws IOException {
         long start = System.nanoTime();
 
         // Map<String, Double> measurements1 = Files.lines(Paths.get(FILE))
