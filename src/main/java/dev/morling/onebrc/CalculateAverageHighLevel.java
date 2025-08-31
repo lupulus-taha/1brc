@@ -16,36 +16,28 @@
 package dev.morling.onebrc;
 
 import java.io.BufferedReader;
-import java.io.FileReader;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.concurrent.atomic.AtomicInteger;
-import java.util.concurrent.atomic.AtomicReference;
+import java.nio.charset.StandardCharsets;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
+import java.util.*;
 
 public class CalculateAverageHighLevel {
     // private static final String MEASUREMENTS = "./measurements.txt";
-    private static final String MEASUREMENTS = "./measurements_trimmed.txt";
+    private static final Path INPUT_PATH = Paths.get("./measurements_trimmed.txt");
+    private static final String DELIMITER = ";";
 
     public static void main(String[] args) {
         long start = System.nanoTime();
 
-        Map<String, MeasurementValues> measurements = new HashMap<>();
+        Map<String, MeasurementStats> measurements = new HashMap<>();
 
-        try(BufferedReader br = new BufferedReader(new FileReader(MEASUREMENTS))) {
+        try(BufferedReader br = Files.newBufferedReader(INPUT_PATH, StandardCharsets.UTF_8)) {
             String line;
             while((line = br.readLine()) != null) {
-                String[] split = line.split(";");
-                if(measurements.containsKey(split[0])) {
-                    MeasurementValues values = measurements.get(split[0]);
-                    values.addValue(Double.parseDouble(split[1]));
-                    measurements.put(split[0], values);
-                }
-                else {
-                    double value = Double.parseDouble(split[1]);
-                    measurements.put(split[0], new MeasurementValues(value));
-                }
+                String[] parts = line.split(DELIMITER, 2);
+                double value = Double.parseDouble(parts[1].trim());
+                measurements.computeIfAbsent(parts[0].trim(), _ -> new MeasurementStats()).add(value);
             }
         }
         catch(Exception e) {
@@ -54,43 +46,40 @@ public class CalculateAverageHighLevel {
 
         long end = System.nanoTime();
 
-        System.out.print("{");
-        int size = measurements.size();
-        AtomicInteger i = new AtomicInteger(0);
-        measurements.forEach((key, value) -> {
-            System.out.printf("%s=%f/%f/%f", key, value.getMin(), value.getAverage(), value.getMax());
-            if (i.incrementAndGet() != size) {
-                System.out.print(", ");
-            }
-        });
-        System.out.print("}\n");
+        StringJoiner joiner = new StringJoiner(", ", "{", "}");
+        measurements.forEach((key, value) -> joiner.add(String.format("%s=%f/%f/%f", key, value.getMin(), value.getAverage(), value.getMax())));
+        System.out.println(joiner);
+
         System.out.println();
         System.out.printf("Delta: %,d%n", end - start);
     }
 
-    private static class MeasurementValues {
-        private final List<Double> values = new ArrayList<>();
+    private static class MeasurementStats {
+        private long count = 0;
+        private double sum = 0.0;
+        private double min = Double.POSITIVE_INFINITY;
+        private double max = Double.NEGATIVE_INFINITY;
 
-        public MeasurementValues(double value) {
-            values.add(value);
-        }
-
-        public void addValue(double value) {
-            values.add(value);
+        public void add(double value) {
+            count++;
+            sum += value;
+            if(value < min) min = value;
+            if(value > max) max = value;
         }
 
         public double getMin() {
-            return values.stream().min(Double::compareTo).orElseThrow();
+            if(count == 0) throw new IllegalStateException("no values");
+            return min;
         }
 
         public double getMax() {
-            return values.stream().max(Double::compareTo).orElseThrow();
+            if(count == 0) throw new IllegalStateException("no values");
+            return max;
         }
 
         public double getAverage() {
-            AtomicReference<Double> average = new AtomicReference<>(0.0);
-            values.forEach(value -> average.updateAndGet(v -> v + value));
-            return (average.get() / values.size());
+            if(count == 0) throw new IllegalStateException("no values");
+            return sum / (double) count;
         }
     }
 }
