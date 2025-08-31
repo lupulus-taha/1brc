@@ -26,7 +26,8 @@ import static java.util.stream.Collectors.groupingBy;
 
 public class CalculateAverage_lupulus_taha {
 
-    private static final String FILE = "./measurements.txt";
+//    private static final String FILE = "./measurements.txt";
+    private static final String FILE = "./measurements_trimmed.txt";
 
     private record Measurement(String station, double value) {
         private Measurement(String[] parts) {
@@ -53,6 +54,8 @@ public class CalculateAverage_lupulus_taha {
     }
 
     static void main(String[] args) throws IOException {
+        long start = System.nanoTime();
+
         // Map<String, Double> measurements1 = Files.lines(Paths.get(FILE))
         // .map(l -> l.split(";"))
         // .collect(groupingBy(m -> m[0], averagingDouble(m -> Double.parseDouble(m[1]))));
@@ -87,6 +90,10 @@ public class CalculateAverage_lupulus_taha {
                 .map(l -> new Measurement(l.split(";")))
                 .collect(groupingBy(m -> m.station(), collector)));
 
+        long end = System.nanoTime();
+
         System.out.println(measurements);
+        System.out.println();
+        System.out.printf("Delta: %,d%n", end - start);
     }
 }
