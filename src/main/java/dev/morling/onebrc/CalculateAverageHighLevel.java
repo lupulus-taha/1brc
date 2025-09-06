@@ -15,32 +15,41 @@
  */
 package dev.morling.onebrc;
 
-import java.io.BufferedReader;
+import java.io.*;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.*;
+import ch.randelshofer.fastdoubleparser.JavaDoubleParser;
+import it.unimi.dsi.fastutil.objects.Object2ObjectMap;
+import it.unimi.dsi.fastutil.objects.Object2ObjectOpenHashMap;
 
 public class CalculateAverageHighLevel {
-    // private static final String MEASUREMENTS = "./measurements.txt";
-    private static final Path INPUT_PATH = Paths.get("./measurements_trimmed.txt");
+    private static final Path INPUT_PATH = Paths.get("./measurements.txt");
+    //    private static final Path INPUT_PATH = Paths.get("./measurements_trimmed.txt");
     private static final String DELIMITER = ";";
 
     public static void main(String[] args) {
         long start = System.nanoTime();
 
-        Map<String, MeasurementStats> measurements = new HashMap<>();
+        Object2ObjectMap<String, MeasurementStats> measurements = new Object2ObjectOpenHashMap<>();
 
         try(BufferedReader br = Files.newBufferedReader(INPUT_PATH, StandardCharsets.UTF_8)) {
             String line;
             while((line = br.readLine()) != null) {
-                String[] parts = line.split(DELIMITER, 2);
-                double value = Double.parseDouble(parts[1].trim());
-                measurements.computeIfAbsent(parts[0].trim(), k -> new MeasurementStats()).add(value);
+                int indexOfDelimiter = line.indexOf(DELIMITER);
+                String city = line.substring(0, indexOfDelimiter);
+                String measurement = line.substring(indexOfDelimiter + 1);
+                double value = JavaDoubleParser.parseDouble(measurement);
+                MeasurementStats stats = measurements.get(city);
+                if(stats == null) {
+                    stats = new MeasurementStats();
+                    measurements.put(city, stats);
+                }
+                stats.add(value);
             }
-        }
-        catch(Exception e) {
+        } catch(Exception e) {
             e.printStackTrace();
         }
 
